@@ -408,3 +408,8 @@ C:\Users\SON\ComicSystem\obj\Debug\net8.0\refint\ComicSystem.dll
 C:\Users\SON\ComicSystem\obj\Debug\net8.0\ComicSystem.pdb
 C:\Users\SON\ComicSystem\obj\Debug\net8.0\ComicSystem.genruntimeconfig.cache
 C:\Users\SON\ComicSystem\obj\Debug\net8.0\ref\ComicSystem.dll
+C:\Users\SON\ComicSystem\obj\Debug\net8.0\ComicSystem.sourcelink.json
+C:\Users\SON\ComicSystem\bin\Debug\net8.0\Microsoft.OpenApi.dll
+C:\Users\SON\ComicSystem\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\SON\ComicSystem\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\SON\ComicSystem\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll

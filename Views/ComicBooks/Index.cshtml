@@ -1,0 +1,29 @@
+@model IEnumerable<ComicSystem.Models.ComicBook>
+
+<h2>Danh sách truyện tranh</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tên truyện</th>
+            <th>Tác giả</th>
+            <th>Giá thuê/ngày</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td>@item.Author</td>
+                <td>@item.PricePerDay.ToString("C")</td>
+                <td>
+                    <a href="@Url.Action("Details", "ComicBooks", new { id = item.ComicBookID })" class="btn btn-info">Chi tiết</a>
+                    <a href="@Url.Action("Edit", "ComicBooks", new { id = item.ComicBookID })" class="btn btn-warning">Sửa</a>
+                    <a href="@Url.Action("Delete", "ComicBooks", new { id = item.ComicBookID })" class="btn btn-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a href="@Url.Action("Create", "ComicBooks")" class="btn btn-primary">Thêm truyện</a>

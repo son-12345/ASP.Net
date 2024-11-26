@@ -1,0 +1,30 @@
+@model IEnumerable<ComicSystem.Models.Rental>
+
+<h2>Danh sách giao dịch thuê</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tên khách hàng</th>
+            <th>Ngày thuê</th>
+            <th>Ngày trả</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var rental in Model)
+        {
+            <tr>
+                <td>@rental.Customer.FullName</td>
+                <td>@rental.RentalDate.ToString("dd/MM/yyyy")</td>
+                <td>@rental.Status</td>
+                <td>
+                    <a href="@Url.Action("Details", "Rentals", new { id = rental.RentalID })" class="btn btn-info">Chi tiết</a>
+                    <a href="@Url.Action("Edit", "Rentals", new { id = rental.RentalID })" class="btn btn-warning">Sửa</a>
+                    <a href="@Url.Action("Delete", "Rentals", new { id = rental.RentalID })" class="btn btn-danger">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a href="@Url.Action("Create", "Rentals")" class="btn btn-primary">Thêm giao dịch</a>

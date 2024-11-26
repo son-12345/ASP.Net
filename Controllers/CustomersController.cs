@@ -1,107 +1,71 @@
-using ComicSystem.Data;
-using ComicSystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-namespace ComicSystem.Controllers{
-    public class CustomersController : Controller
+using ComicSystem.Models;
+using ComicSystem.Data;
+
+namespace ComicSystem.Controllers
 {
-    private readonly ComicSystemContext _context;
-
-    public CustomersController(ComicSystemContext context)
+    [Route("api/Customers")]
+    [ApiController]
+    public class CustomerApiController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly ComicSystemContext _context;
 
-    // Hiển thị danh sách khách hàng
-    public async Task<IActionResult> Index()
-    {
-        return View(await _context.Customers.ToListAsync());
-    }
+        public CustomerApiController(ComicSystemContext context)
+        {
+            _context = context;
+        }
 
-    // Form đăng ký khách hàng mới
-    public IActionResult Register() => View();
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
+        {
+            return await _context.Customers.ToListAsync();
+        }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(Customer customer)
-    {
-        if (ModelState.IsValid)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Customer>> GetCustomer(int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null) return NotFound();
+            return customer;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Customer>> PostCustomer(Customer customer)
         {
             customer.RegistrationDate = DateTime.Now;
-            _context.Add(customer);
+            _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return CreatedAtAction(nameof(GetCustomer), new { id = customer.CustomerID }, customer);
         }
-        return View(customer);
-    }
 
-    // Hiển thị thông tin chi tiết khách hàng
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null || _context.Customers == null)
-            return NotFound();
-
-        var customer = await _context.Customers.FirstOrDefaultAsync(m => m.CustomerID == id);
-        return customer == null ? NotFound() : View(customer);
-    }
-
-    // Form chỉnh sửa thông tin khách hàng
-    public async Task<IActionResult> Edit(int? id)
-    {
-        if (id == null || _context.Customers == null)
-            return NotFound();
-
-        var customer = await _context.Customers.FindAsync(id);
-        return customer == null ? NotFound() : View(customer);
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Customer customer)
-    {
-        if (id != customer.CustomerID)
-            return NotFound();
-
-        if (ModelState.IsValid)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCustomer(int id, Customer customer)
         {
+            if (id != customer.CustomerID) return BadRequest();
+            _context.Entry(customer).State = EntityState.Modified;
             try
             {
-                _context.Update(customer);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.Customers.Any(e => e.CustomerID == id))
-                    return NotFound();
+                if (!CustomerExists(id)) return NotFound();
                 else throw;
             }
-            return RedirectToAction(nameof(Index));
+            return NoContent();
         }
-        return View(customer);
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCustomer(int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null) return NotFound();
+            _context.Customers.Remove(customer);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        private bool CustomerExists(int id) => _context.Customers.Any(e => e.CustomerID == id);
     }
-
-    // Xóa khách hàng
-    public async Task<IActionResult> Delete(int? id)
-    {
-        if (id == null || _context.Customers == null)
-            return NotFound();
-
-        var customer = await _context.Customers.FirstOrDefaultAsync(m => m.CustomerID == id);
-        return customer == null ? NotFound() : View(customer);
-    }
-
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
-    {
-        if (_context.Customers == null) return Problem("Entity set 'Customers' is null.");
-
-        var customer = await _context.Customers.FindAsync(id);
-        if (customer != null) _context.Customers.Remove(customer);
-
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
-    }
-}
-
 }

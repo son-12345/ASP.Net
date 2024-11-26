@@ -1,122 +1,76 @@
-using ComicSystem.Data;
-using ComicSystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ComicSystem.Models;
+using ComicSystem.Data;
 
-namespace ComicSystem.Controllers{
-    public class RentalsController : Controller
+namespace ComicSystem.Controllers
 {
-    private readonly ComicSystemContext _context;
-
-    public RentalsController(ComicSystemContext context)
+    [Route("api/Rentals")]
+    [ApiController]
+    public class RentalApiController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly ComicSystemContext _context;
 
-    // Hiển thị danh sách phiếu thuê
-    public async Task<IActionResult> Index()
-    {
-        var rentals = _context.Rentals.Include(r => r.Customer).ToListAsync();
-        return View(await rentals);
-    }
-
-    // Form tạo phiếu thuê mới
-    public IActionResult Create()
-    {
-        ViewBag.Customers = _context.Customers.ToList();
-        ViewBag.ComicBooks = _context.ComicBooks.ToList();
-        return View();
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Rental rental, List<int> comicBookIds, List<int> quantities)
-    {
-        if (ModelState.IsValid)
+        public RentalApiController(ComicSystemContext context)
         {
-            rental.RentalDate = DateTime.Now;
-            rental.Status = "Active";
-            _context.Add(rental);
-            await _context.SaveChangesAsync();
-
-            // Lưu chi tiết phiếu thuê
-            for (int i = 0; i < comicBookIds.Count; i++)
-            {
-                var rentalDetail = new RentalDetail
-                {
-                    RentalID = rental.RentalID,
-                    ComicBookID = comicBookIds[i],
-                    Quantity = quantities[i],
-                    PricePerDay = _context.ComicBooks.First(c => c.ComicBookID == comicBookIds[i]).PricePerDay
-                };
-                _context.RentalDetails.Add(rentalDetail);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            _context = context;
         }
 
-        ViewBag.Customers = _context.Customers.ToList();
-        ViewBag.ComicBooks = _context.ComicBooks.ToList();
-        return View(rental);
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Rental>>> GetRentals()
+        {
+            return await _context.Rentals
+                                 .Include(r => r.Customer)
+                                 .Include(r => r.RentalDetails)
+                                 .ToListAsync();
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Rental>> GetRental(int id)
+        {
+            var rental = await _context.Rentals
+                                       .Include(r => r.Customer)
+                                       .Include(r => r.RentalDetails)
+                                       .FirstOrDefaultAsync(r => r.RentalID == id);
+            if (rental == null) return NotFound();
+            return rental;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Rental>> PostRental(Rental rental)
+        {
+            _context.Rentals.Add(rental);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetRental), new { id = rental.RentalID }, rental);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutRental(int id, Rental rental)
+        {
+            if (id != rental.RentalID) return BadRequest();
+            _context.Entry(rental).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!RentalExists(id)) return NotFound();
+                else throw;
+            }
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteRental(int id)
+        {
+            var rental = await _context.Rentals.FindAsync(id);
+            if (rental == null) return NotFound();
+            _context.Rentals.Remove(rental);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        private bool RentalExists(int id) => _context.Rentals.Any(e => e.RentalID == id);
     }
-
-    // Hiển thị chi tiết phiếu thuê
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null || _context.Rentals == null)
-            return NotFound();
-
-        var rental = await _context.Rentals
-            .Include(r => r.Customer)
-            .Include(r => r.RentalDetails)
-                .ThenInclude(rd => rd.ComicBook)
-            .FirstOrDefaultAsync(m => m.RentalID == id);
-
-        return rental == null ? NotFound() : View(rental);
-    }
-
-    // Kết thúc phiếu thuê
-    public async Task<IActionResult> Complete(int? id)
-    {
-        if (id == null || _context.Rentals == null)
-            return NotFound();
-
-        var rental = await _context.Rentals.FindAsync(id);
-        if (rental == null)
-            return NotFound();
-
-        rental.Status = "Completed";
-        rental.ReturnDate = DateTime.Now;
-
-        _context.Update(rental);
-        await _context.SaveChangesAsync();
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    // Xóa phiếu thuê
-    public async Task<IActionResult> Delete(int? id)
-    {
-        if (id == null || _context.Rentals == null)
-            return NotFound();
-
-        var rental = await _context.Rentals.FirstOrDefaultAsync(m => m.RentalID == id);
-        return rental == null ? NotFound() : View(rental);
-    }
-
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
-    {
-        if (_context.Rentals == null) return Problem("Entity set 'Rentals' is null.");
-
-        var rental = await _context.Rentals.FindAsync(id);
-        if (rental != null) _context.Rentals.Remove(rental);
-
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
-    }
-}
-
 }

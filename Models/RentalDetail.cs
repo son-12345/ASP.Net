@@ -7,8 +7,8 @@ namespace ComicSystem.Models{
     public int Quantity { get; set; }
     public decimal PricePerDay { get; set; }
 
-    public Rental Rental { get; set; }
-    public ComicBook ComicBook { get; set; }
+    public Rental? Rental { get; set; }
+    public ComicBook? ComicBook { get; set; }
 }
 
 }

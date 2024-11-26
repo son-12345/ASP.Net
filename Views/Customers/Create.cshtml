@@ -1,0 +1,22 @@
+@model ComicSystem.Models.Customer
+
+<h2>Thêm khách hàng mới</h2>
+<form asp-action="Create">
+    <div class="form-group">
+        <label for="FullName">Tên khách hàng</label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label for="PhoneNumber">Số điện thoại</label>
+        <input asp-for="PhoneNumber" class="form-control" />
+        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label for="RegistrationDate">Ngày đăng ký</label>
+        <input asp-for="RegistrationDate" class="form-control" />
+        <span asp-validation-for="RegistrationDate" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+</form>

@@ -1,93 +1,70 @@
-using ComicSystem.Data;
-using ComicSystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ComicSystem.Models;
+using ComicSystem.Data;
 
-namespace ComicSystem.Controllers{
-    public class ComicBooksController : Controller
+namespace ComicSystem.Controllers
 {
-    private readonly ComicSystemContext _context;
-
-    public ComicBooksController(ComicSystemContext context)
+    [Route("api/ComicBooks")]
+    [ApiController]
+    public class ComicBookApiController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly ComicSystemContext _context;
 
-    public async Task<IActionResult> Index()
-    {
-        return View(await _context.ComicBooks.ToListAsync());
-    }
-
-    public IActionResult Create() => View();
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(ComicBook comicBook)
-    {
-        if (ModelState.IsValid)
+        public ComicBookApiController(ComicSystemContext context)
         {
-            _context.Add(comicBook);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            _context = context;
         }
-        return View(comicBook);
-    }
 
-    public async Task<IActionResult> Edit(int? id)
-    {
-        if (id == null || _context.ComicBooks == null)
-            return NotFound();
-
-        var comicBook = await _context.ComicBooks.FindAsync(id);
-        return comicBook == null ? NotFound() : View(comicBook);
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, ComicBook comicBook)
-    {
-        if (id != comicBook.ComicBookID)
-            return NotFound();
-
-        if (ModelState.IsValid)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ComicBook>>> GetComicBooks()
         {
+            return await _context.ComicBooks.ToListAsync();
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ComicBook>> GetComicBook(int id)
+        {
+            var comicBook = await _context.ComicBooks.FindAsync(id);
+            if (comicBook == null) return NotFound();
+            return comicBook;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<ComicBook>> PostComicBook(ComicBook comicBook)
+        {
+            _context.ComicBooks.Add(comicBook);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetComicBook), new { id = comicBook.ComicBookID }, comicBook);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutComicBook(int id, ComicBook comicBook)
+        {
+            if (id != comicBook.ComicBookID) return BadRequest();
+            _context.Entry(comicBook).State = EntityState.Modified;
             try
             {
-                _context.Update(comicBook);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.ComicBooks.Any(e => e.ComicBookID == id))
-                    return NotFound();
+                if (!ComicBookExists(id)) return NotFound();
                 else throw;
             }
-            return RedirectToAction(nameof(Index));
+            return NoContent();
         }
-        return View(comicBook);
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteComicBook(int id)
+        {
+            var comicBook = await _context.ComicBooks.FindAsync(id);
+            if (comicBook == null) return NotFound();
+            _context.ComicBooks.Remove(comicBook);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        private bool ComicBookExists(int id) => _context.ComicBooks.Any(e => e.ComicBookID == id);
     }
-
-    public async Task<IActionResult> Delete(int? id)
-    {
-        if (id == null || _context.ComicBooks == null)
-            return NotFound();
-
-        var comicBook = await _context.ComicBooks.FirstOrDefaultAsync(m => m.ComicBookID == id);
-        return comicBook == null ? NotFound() : View(comicBook);
-    }
-
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
-    {
-        if (_context.ComicBooks == null) return Problem("Entity set 'ComicBooks' is null.");
-
-        var comicBook = await _context.ComicBooks.FindAsync(id);
-        if (comicBook != null) _context.ComicBooks.Remove(comicBook);
-
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
-    }
-}
-
 }
